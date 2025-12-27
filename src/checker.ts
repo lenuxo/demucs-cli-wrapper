@@ -11,6 +11,8 @@ import {
   isDemucsAvailable,
   getDemucsVersion,
   checkPythonDependencies,
+  isFfmpegAvailable,
+  getFfmpegVersion,
   type DependencyCheckResult,
 } from "./utils/conda.js";
 
@@ -36,6 +38,10 @@ export interface CheckResult {
     missingCritical: string[];
     results: DependencyCheckResult[];
   };
+  ffmpeg: {
+    available: boolean;
+    version?: string;
+  };
 }
 
 /**
@@ -52,6 +58,7 @@ export async function checkEnvironment(envName: string = "demucs"): Promise<Chec
       missingCritical: [],
       results: [],
     },
+    ffmpeg: { available: false },
   };
 
   // 检查 conda
@@ -109,6 +116,16 @@ export async function checkEnvironment(envName: string = "demucs"): Promise<Chec
   if (missingCritical.length > 0) {
     result.success = false;
   }
+
+  // 检查 ffmpeg
+  const ffmpegAvailable = await isFfmpegAvailable(envName);
+  result.ffmpeg.available = ffmpegAvailable;
+
+  if (ffmpegAvailable) {
+    const version = await getFfmpegVersion(envName);
+    result.ffmpeg.version = version || undefined;
+  }
+  // 注意：ffmpeg 不可用不影响整体 success，因为 instrumental 生成是可选的
 
   return result;
 }
@@ -192,6 +209,18 @@ export function printCheckResult(result: CheckResult): void {
       console.log(chalk.gray("  conda install ffmpeg -c conda-forge"));
       console.log(chalk.gray("  pip install diffq hydra-core soundfile julius openunmix einops\n"));
     }
+  }
+
+  // FFmpeg 检查
+  if (result.ffmpeg.available) {
+    console.log(chalk.green("✓ FFmpeg 已安装"));
+    if (result.ffmpeg.version) {
+      console.log(chalk.gray(`  版本: ${result.ffmpeg.version}`));
+    }
+  } else {
+    console.log(chalk.yellow("⚠ FFmpeg 未安装"));
+    console.log(chalk.gray("  注意: FFmpeg 用于生成 instrumental 伴奏文件"));
+    console.log(chalk.gray("  安装命令: conda install ffmpeg -c conda-forge -n demucs"));
   }
 
   console.log();

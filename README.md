@@ -103,12 +103,13 @@ bun run start [options] <input...>
 | 参数 | 说明 | 默认值 |
 |------|------|--------|
 | `<input>` | 音频文件或目录路径（支持多个） | - |
-| `-o, --output <dir>` | 输出目录 | `./output` |
+| `-o, --output <dir>` | 输出目录 | `./stems` |
 | `-d, --device <device>` | 设备类型 (cpu/cuda/mps) | `cpu` |
 | `-j, --jobs <number>` | 并发处理任务数 | `1` |
 | `-m, --model <model>` | Demucs 模型名称 | `htdemucs` |
 | `--env <name>` | Conda 环境名称 | `demucs` |
-| `--format <format>` | 输出格式 (wav/mp3/flac) | - |
+| `-f, --format <format>` | 输出格式 (wav/mp3) | `wav` |
+| `--mp3-bitrate <rate>` | MP3 比特率 | `320k` |
 | `-v, --verbose` | 详细输出模式 | `false` |
 | `--check` | 仅检查环境，不执行处理 | - |
 | `--dry-run` | 模拟运行，显示将要执行的命令 | - |
@@ -133,6 +134,12 @@ bun run start -o ./separated -d cuda song.mp3
 
 # 并发处理（4个任务）
 bun run start -j 4 ./album
+
+# 输出为 MP3 格式（默认 320k 比特率）
+bun run start -f mp3 song.mp3
+
+# 输出为 MP3 格式（自定义比特率）
+bun run start -f mp3 --mp3-bitrate 192k song.mp3
 
 # 模拟运行
 bun run start --dry-run song.mp3

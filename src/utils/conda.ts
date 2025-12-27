@@ -185,3 +185,31 @@ export async function checkPythonDependencies(
 
   return results;
 }
+
+/**
+ * 检查环境中 ffmpeg 是否可用
+ */
+export async function isFfmpegAvailable(envName: string): Promise<boolean> {
+  try {
+    const result = await runInEnv(envName, "ffmpeg", ["-version"]);
+    return result.exitCode === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 获取 ffmpeg 版本
+ */
+export async function getFfmpegVersion(envName: string): Promise<string | null> {
+  try {
+    const result = await runInEnv(envName, "ffmpeg", ["-version"]);
+    if (result.exitCode === 0) {
+      const match = result.stdout.match(/ffmpeg version\s+(\S+)/i);
+      return match ? match[1] : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

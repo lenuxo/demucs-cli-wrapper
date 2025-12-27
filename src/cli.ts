@@ -17,6 +17,7 @@ export interface CliOptions {
   model?: string;
   env?: string;
   format?: string;
+  mp3Bitrate?: string;
   verbose?: boolean;
   check?: boolean;
   dryRun?: boolean;
@@ -33,12 +34,13 @@ export function createCli(): Command {
     .description("Demucs 音频分离工具的友好 CLI 包装")
     .version("1.0.0")
     .argument("[input...]", "音频文件或目录路径")
-    .option("-o, --output <dir>", "输出目录", "./output")
+    .option("-o, --output <dir>", "输出目录", "./stems")
     .option("-d, --device <device>", "设备类型 (cpu/cuda/mps)", "cpu")
     .option("-j, --jobs <number>", "并发处理任务数", "1")
     .option("-m, --model <model>", "Demucs 模型名称", "htdemucs")
     .option("--env <name>", "Conda 环境名称", "demucs")
-    .option("--format <format>", "输出格式 (wav/mp3/flac)")
+    .option("-f, --format <format>", "输出格式 (wav/mp3)", "wav")
+    .option("--mp3-bitrate <rate>", "MP3 比特率 (默认: 320k)", "320k")
     .option("-v, --verbose", "详细输出模式", false)
     .option("--check", "仅检查环境，不执行处理")
     .option("--dry-run", "模拟运行，显示将要执行的命令")
@@ -125,6 +127,7 @@ async function handleCommand(inputs: string[], options: CliOptions): Promise<voi
     model: options.model,
     output: options.output,
     format: options.format,
+    mp3Bitrate: options.mp3Bitrate,
     jobs: options.jobs ? parseInt(options.jobs.toString()) : 1,
     verbose: options.verbose,
     dryRun: options.dryRun,

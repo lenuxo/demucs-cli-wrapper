@@ -6,6 +6,7 @@
 import chalk from "chalk";
 import yoctoSpinner from "yocto-spinner";
 import { runInEnv } from "./utils/conda.js";
+import { findStemFiles, mergeAudioFiles, getFileNameWithoutExt } from "./utils/merge.js";
 
 /**
  * 处理选项
@@ -16,6 +17,7 @@ export interface ProcessOptions {
   model?: string;
   output?: string;
   format?: string;
+  mp3Bitrate?: string;
   jobs?: number;
   verbose?: boolean;
   dryRun?: boolean;
@@ -43,7 +45,7 @@ export async function processAudioFile(
   filePath: string,
   options: ProcessOptions
 ): Promise<ProcessResult> {
-  const { env, device, model, output, format, jobs, verbose, dryRun } = options;
+  const { env, device, model, output, format, mp3Bitrate, jobs, verbose, dryRun } = options;
 
   // 构建 demucs 命令
   const args = ["-d", device];
@@ -56,8 +58,17 @@ export async function processAudioFile(
     args.push("-o", output);
   }
 
+  // 处理输出格式
   if (format) {
-    args.push("--format", format);
+    const normalizedFormat = format.toLowerCase();
+    if (normalizedFormat === "mp3") {
+      args.push("--mp3");
+      // 添加 MP3 比特率
+      if (mp3Bitrate) {
+        args.push("--mp3-bitrate", mp3Bitrate);
+      }
+    }
+    // wav 是默认格式，不需要添加参数
   }
 
   if (jobs && jobs > 1) {
@@ -77,6 +88,8 @@ export async function processAudioFile(
     const result = await runInEnv(env, "demucs", args);
 
     if (result.exitCode === 0) {
+      // demucs 成功，生成 instrumental 伴奏
+      await createInstrumental(filePath, options);
       return { success: true, output: result.stdout };
     } else {
       return { success: false, error: result.stderr || result.stdout };
@@ -86,6 +99,52 @@ export async function processAudioFile(
       success: false,
       error: error instanceof Error ? error.message : String(error),
     };
+  }
+}
+
+/**
+ * 创建 instrumental 伴奏
+ * 将 demucs 输出的 drums, bass, other 合并为一个 instrumental 文件
+ */
+async function createInstrumental(
+  filePath: string,
+  options: ProcessOptions
+): Promise<void> {
+  const { env, model = "htdemucs", output = "stems", format = "wav", verbose } = options;
+
+  // 获取文件名（不含路径和扩展名）
+  const filename = getFileNameWithoutExt(filePath);
+
+  // 查找 stem 文件
+  const stems = findStemFiles(output, model, filename, format);
+
+  if (!stems) {
+    if (verbose) {
+      console.log(
+        chalk.yellow(`  ⚠ 找不到 stem 文件，跳过 instrumental 生成`)
+      );
+    }
+    return;
+  }
+
+  // instrumental 输出路径
+  const instrumentalPath = `${output}/${model}/${filename}/instrumental.${format}`;
+
+  // 合并音频
+  const result = await mergeAudioFiles(
+    [stems.drums, stems.bass, stems.other],
+    instrumentalPath,
+    env
+  );
+
+  if (result.success) {
+    console.log(chalk.gray(`  ✓ 已生成 instrumental 伴奏`));
+  } else {
+    if (verbose) {
+      console.log(
+        chalk.yellow(`  ⚠ instrumental 生成失败: ${result.error}`)
+      );
+    }
   }
 }
 

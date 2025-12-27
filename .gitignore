@@ -13,6 +13,7 @@ build
 *.tgz
 
 # demucs output
+stems/
 output/
 
 # test files
