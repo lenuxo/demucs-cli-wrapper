@@ -97,3 +97,91 @@ export async function getDemucsVersion(envName: string): Promise<string | null> 
     return null;
   }
 }
+
+/**
+ * 依赖包检查结果
+ */
+export interface DependencyCheckResult {
+  name: string;
+  installed: boolean;
+  version?: string;
+  critical: boolean;
+}
+
+/**
+ * 检查 Python 依赖包是否已安装
+ *
+ * ⚠️ 重要说明：为什么只检查 torch 和 torchaudio？
+ *
+ * 1. **避免误报问题**：
+ *    - 其他依赖（如 ffmpeg、hydra-core、soundfile 等）的检测方式多样，
+ *      有些通过 Python 包安装，有些是系统级命令，检测逻辑容易产生误报
+ *    - torch 和 torchaudio 是最核心、最容易准确检测的依赖
+ *
+ * 2. **核心依赖原则**：
+ *    - torch 和 torchaudio 是 demucs 运行的基础深度学习框架
+ *    - 如果这两个正常，通过 environment-cpu.yml 安装的其他依赖通常也能正常工作
+ *    - demucs 本身的导入检查会验证其他依赖是否齐全
+ *
+ * 3. **实用主义**：
+ *    - 简化检查逻辑，提高检查速度和可靠性
+ *    - 用户遇到运行时错误时，实际的错误信息会比静态检查更准确
+ *
+ * 4. **配置文件保证**：
+ *    - 推荐使用 environment-cpu.yml 配置环境，确保所有依赖正确安装
+ *    - 配置文件包含了完整且经过测试的依赖列表
+ */
+export async function checkPythonDependencies(
+  envName: string
+): Promise<DependencyCheckResult[]> {
+  // 只检查核心依赖
+  const dependencies = [
+    { name: "torch", critical: true },
+    { name: "torchaudio", critical: true },
+  ];
+
+  const results: DependencyCheckResult[] = [];
+
+  for (const dep of dependencies) {
+    try {
+      // 尝试导入模块来检查是否安装
+      const result = await runInEnv(envName, "python", [
+        "-c",
+        `import importlib.util, sys; spec = importlib.util.find_spec("${dep.name}"); print(spec.origin.split("/")[-1] if spec else "NOT_FOUND"); sys.exit(0 if spec else 1)`,
+      ]);
+
+      const installed = result.exitCode === 0;
+      let version: string | undefined;
+
+      if (installed) {
+        // 尝试获取版本
+        try {
+          const versionResult = await runInEnv(envName, "python", [
+            "-c",
+            `import ${dep.name}; version = getattr(${dep.name}, "__version__", "unknown"); print(version)`,
+          ]);
+          if (versionResult.exitCode === 0) {
+            version = versionResult.stdout.trim();
+          }
+        } catch {
+          // 版本获取失败，但包已安装
+        }
+      }
+
+      results.push({
+        name: dep.name,
+        installed,
+        version,
+        critical: dep.critical,
+      });
+    } catch {
+      results.push({
+        name: dep.name,
+        installed: false,
+        critical: dep.critical,
+      });
+    }
+  }
+
+  return results;
+}

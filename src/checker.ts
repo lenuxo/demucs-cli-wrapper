@@ -10,6 +10,8 @@ import {
   isEnvExists,
   isDemucsAvailable,
   getDemucsVersion,
+  checkPythonDependencies,
+  type DependencyCheckResult,
 } from "./utils/conda.js";
 
 /**
@@ -29,6 +31,11 @@ export interface CheckResult {
     available: boolean;
     version?: string;
   };
+  dependencies: {
+    allInstalled: boolean;
+    missingCritical: string[];
+    results: DependencyCheckResult[];
+  };
 }
 
 /**
@@ -40,6 +47,11 @@ export async function checkEnvironment(envName: string = "demucs"): Promise<Chec
     conda: { available: false },
     env: { exists: false, name: envName },
     demucs: { available: false },
+    dependencies: {
+      allInstalled: true,
+      missingCritical: [],
+      results: [],
+    },
   };
 
   // 检查 conda
@@ -71,6 +83,30 @@ export async function checkEnvironment(envName: string = "demucs"): Promise<Chec
     const version = await getDemucsVersion(envName);
     result.demucs.version = version || undefined;
   } else {
+    result.success = false;
+    return result;
+  }
+
+  // 检查 Python 依赖
+  const depResults = await checkPythonDependencies(envName);
+  result.dependencies.results = depResults;
+
+  const missingCritical: string[] = [];
+  let allInstalled = true;
+
+  for (const dep of depResults) {
+    if (!dep.installed) {
+      allInstalled = false;
+      if (dep.critical) {
+        missingCritical.push(dep.name);
+      }
+    }
+  }
+
+  result.dependencies.allInstalled = allInstalled;
+  result.dependencies.missingCritical = missingCritical;
+
+  if (missingCritical.length > 0) {
     result.success = false;
   }
 
@@ -110,10 +146,52 @@ export function printCheckResult(result: CheckResult): void {
     }
   } else {
     console.log(chalk.red("✗ Demucs 未安装或不可用"));
-    console.log(chalk.gray(`  请运行: conda install -c conda-forge demucs`));
-    console.log(chalk.gray("  或激活环境后手动安装:"));
+    console.log(chalk.gray(`  请运行: conda env update -f environment-cpu.yml`));
+    console.log(chalk.gray("  或手动安装:"));
     console.log(chalk.gray(`    conda activate ${result.env.name}`));
+    console.log(chalk.gray("    conda install pytorch cpuonly -c pytorch"));
+    console.log(chalk.gray("    conda install ffmpeg tqdm -c conda-forge"));
     console.log(chalk.gray("    pip install demucs"));
+  }
+
+  // 依赖检查
+  if (result.demucs.available && result.dependencies.results.length > 0) {
+    console.log(chalk.bold("\nPython 依赖检查:"));
+
+    const installed = result.dependencies.results.filter((d) => d.installed);
+    const missing = result.dependencies.results.filter((d) => !d.installed);
+    const missingCritical = result.dependencies.results.filter((d) => !d.installed && d.critical);
+
+    // 显示已安装的依赖
+    if (installed.length > 0) {
+      console.log(chalk.gray("\n已安装的依赖:"));
+      for (const dep of installed) {
+        const versionStr = dep.version ? chalk.gray(` (${dep.version})`) : "";
+        const criticalStr = dep.critical ? chalk.gray(" [关键]") : "";
+        console.log(chalk.green(`  ✓ ${dep.name}${versionStr}${criticalStr}`));
+      }
+    }
+
+    // 显示缺失的依赖
+    if (missing.length > 0) {
+      console.log(chalk.red("\n缺失的依赖:"));
+      for (const dep of missing) {
+        const criticalStr = dep.critical ? chalk.red.bold(" [关键]") : chalk.gray(" [可选]");
+        console.log(chalk.red(`  ✗ ${dep.name}${criticalStr}`));
+      }
+    }
+
+    // 如果有关键依赖缺失，显示安装提示
+    if (missingCritical.length > 0) {
+      console.log(chalk.red.bold("\n⚠️  检测到缺失的关键依赖！"));
+      console.log(chalk.yellow("请运行以下命令安装所有依赖:\n"));
+      console.log(chalk.gray(`  conda env update -f environment-cpu.yml\n`));
+      console.log(chalk.yellow("或手动安装:\n"));
+      console.log(chalk.gray("  conda activate demucs"));
+      console.log(chalk.gray("  conda install pytorch cpuonly torchaudio -c pytorch"));
+      console.log(chalk.gray("  conda install ffmpeg -c conda-forge"));
+      console.log(chalk.gray("  pip install diffq hydra-core soundfile julius openunmix einops\n"));
+    }
   }
 
   console.log();

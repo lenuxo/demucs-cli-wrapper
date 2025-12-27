@@ -31,24 +31,58 @@ bun install -g /path/to/demucs-cli
 
 ## 环境准备
 
-### 1. 创建 conda 环境（如果还没有）
+⚠️ **重要**: Demucs 需要完整的依赖环境才能正常运行。仅安装 `demucs` 包可能导致音频处理失败。
+
+### 方法一：使用环境配置文件（推荐）
+
+这是最可靠的方式，确保所有依赖都正确安装：
 
 ```bash
-conda create -n demucs python=3.10
-```
+# 1. 创建并配置环境（使用项目提供的 environment-cpu.yml）
+conda env update -f environment-cpu.yml
 
-### 2. 激活环境并安装 demucs
-
-```bash
+# 2. 激活环境
 conda activate demucs
-pip install demucs
-```
 
-### 3. 验证安装
-
-```bash
+# 3. 验证安装
 bun run check
 ```
+
+### 方法二：手动安装
+
+如果无法使用环境配置文件，可以手动安装：
+
+```bash
+# 1. 创建 conda 环境
+conda create -n demucs python=3.10
+
+# 2. 激活环境
+conda activate demucs
+
+# 3. 安装 PyTorch（CPU 版本）
+conda install pytorch cpuonly -c pytorch
+
+# 4. 安装其他必要依赖
+conda install ffmpeg tqdm -c conda-forge
+
+# 5. 安装 demucs
+pip install demucs
+
+# 6. 安装额外的 Python 依赖
+pip install diffq dora-search einops hydra-colorlog hydra-core julius lameenc openunmix musdb museval soundfile submitit treetable
+
+# 7. 验证安装
+bun run check
+```
+
+### 依赖说明
+
+Demucs 依赖以下关键组件：
+- **PyTorch**: 深度学习框架
+- **FFmpeg**: 音频处理工具
+- **其他 Python 包**: diffq, einops, hydra-core, soundfile 等
+
+如果缺少这些依赖，音频处理可能会失败或报错。
 
 ## 使用方法
 

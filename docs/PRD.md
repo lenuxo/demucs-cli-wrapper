@@ -10,6 +10,26 @@
 - 用户已在本地创建名为 `demucs` 的 conda 环境并安装了 demucs
 - 基础命令：`demucs -d cpu PATH_TO_AUDIO_FILE`
 
+### 1.3 环境依赖说明
+⚠️ **重要**: Demucs 依赖完整的环境配置才能正常工作
+
+仅安装 `demucs` 包是不够的，还需要以下关键依赖：
+
+| 依赖 | 用途 |
+|------|------|
+| PyTorch | 深度学习框架 |
+| FFmpeg | 音频编解码 |
+| diffq, einops | 模型相关 |
+| hydra-core | 配置管理 |
+| soundfile | 音频文件读写 |
+
+**推荐配置方式**：
+```bash
+conda env update -f environment-cpu.yml
+```
+
+这会安装所有必要的依赖，确保 demucs 能正常运行。
+
 ---
 
 ## 2. 核心功能需求
