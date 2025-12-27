@@ -4,7 +4,7 @@
  */
 
 import chalk from "chalk";
-import ora from "ora";
+import yoctoSpinner from "yocto-spinner";
 import { runInEnv } from "./utils/conda.js";
 
 /**
@@ -100,15 +100,15 @@ export async function processAudioFiles(
   let successCount = 0;
 
   for (const filePath of filePaths) {
-    const spinner = ora(`处理: ${filePath}`).start();
+    const spinner = yoctoSpinner({ text: `处理: ${filePath}` }).start();
 
     const result = await processAudioFile(filePath, options);
 
     if (result.success) {
       successCount++;
-      spinner.succeed(chalk.green(`完成: ${filePath}`));
+      spinner.success(chalk.green(`完成: ${filePath}`));
     } else {
-      spinner.fail(chalk.red(`失败: ${filePath}`));
+      spinner.error(chalk.red(`失败: ${filePath}`));
       if (result.error && options.verbose) {
         console.log(chalk.gray(`  错误: ${result.error}`));
       }
@@ -148,15 +148,15 @@ export async function processAudioFilesWithProgress(
       const filePath = filePaths[i];
       if (!filePath) continue;
 
-      const spinner = ora(`[${i + 1}/${filePaths.length}] 处理: ${filePath}`).start();
+      const spinner = yoctoSpinner({ text: `[${i + 1}/${filePaths.length}] 处理: ${filePath}` }).start();
 
       const result = await processAudioFile(filePath, options);
 
       if (result.success) {
         successCount++;
-        spinner.succeed(chalk.green(`[${i + 1}/${filePaths.length}] 完成: ${filePath}`));
+        spinner.success(chalk.green(`[${i + 1}/${filePaths.length}] 完成: ${filePath}`));
       } else {
-        spinner.fail(chalk.red(`[${i + 1}/${filePaths.length}] 失败: ${filePath}`));
+        spinner.error(chalk.red(`[${i + 1}/${filePaths.length}] 失败: ${filePath}`));
         if (result.error && options.verbose) {
           console.log(chalk.gray(`  错误: ${result.error}`));
         }
