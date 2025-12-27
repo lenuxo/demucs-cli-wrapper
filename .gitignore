@@ -1,0 +1,69 @@
+# dependencies
+node_modules
+node_modules/
+
+# Bun
+.bun/
+bun.lockb
+
+# output
+out
+dist
+build
+*.tgz
+
+# demucs output
+output/
+
+# test files
+test-files/
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.aac
+*.ogg
+*.wma
+*.aiff
+*.aif
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+_.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.cursor/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
