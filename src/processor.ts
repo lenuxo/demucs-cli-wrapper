@@ -63,9 +63,10 @@ export async function processAudioFile(
     const normalizedFormat = format.toLowerCase();
     if (normalizedFormat === "mp3") {
       args.push("--mp3");
-      // 添加 MP3 比特率
+      // 添加 MP3 比特率（去掉 'k' 后缀，demucs 只接受数字）
       if (mp3Bitrate) {
-        args.push("--mp3-bitrate", mp3Bitrate);
+        const bitrate = mp3Bitrate.replace(/k/i, "");
+        args.push("--mp3-bitrate", bitrate);
       }
     }
     // wav 是默认格式，不需要添加参数
