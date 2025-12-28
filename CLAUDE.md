@@ -1,10 +1,6 @@
----
-description: Demucs CLI - AI Development Guide for Demucs Audio Separation Tool Wrapper
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# Demucs CLI - AI Development Guide for Demucs Audio Separation Tool Wrapper
 
-# Demucs CLI - AI 开发指南
+开发指南
 
 ## 项目概述
 
