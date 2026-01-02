@@ -1,6 +1,5 @@
 # Demucs CLI - AI Development Guide for Demucs Audio Separation Tool Wrapper
 
-开发指南
 
 ## 项目概述
 
@@ -134,24 +133,6 @@ test("hello world", () => {
   expect(1).toBe(1);
 });
 ```
-
----
-
-## 当前项目状态
-
-### 已实现功能 (P0-P1)
-- ✅ 环境检查模块
-- ✅ 单文件处理
-- ✅ 批量目录处理
-- ✅ 并发控制
-- ✅ 进度显示
-- ✅ CLI 参数完整支持
-
-### 待扩展方向 (P2-P3)
-- 日志系统
-- 配置文件支持
-- 更丰富的错误恢复机制
-- 输出文件后处理
 
 ---
 

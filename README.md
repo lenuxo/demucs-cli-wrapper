@@ -1,171 +1,201 @@
 # Demucs CLI
 
-Demucs 音频分离工具的友好 CLI 包装层。
+[![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![中文](https://img.shields.io/badge/lang-中文-blue.svg)](README.zh-CN.md)
 
-## 前置要求
+> A user-friendly CLI wrapper for Demucs audio separation tool with automatic instrumental accompaniment generation.
+
+## ✨ Features
+
+- 🎵 **Audio Source Separation** - Separate audio into 4 stems: drums, bass, other, vocals
+- 🎼 **Automatic Instrumental Generation** - Automatically merge instrumental stems (drums + bass + other) into a single accompaniment track
+- 🎧 **Multiple Format Support** - Output in WAV (default) or MP3 format with customizable bitrate
+- 🚀 **Batch Processing** - Process multiple files or entire directories at once
+- ⚡ **Concurrent Processing** - Optional parallel processing for faster completion
+- 🔍 **Environment Validation** - Built-in checks for conda, demucs, and dependencies
+- 🛠️ **Conda Environment Isolation** - Clean execution without polluting your shell
+
+## Prerequisites
 
 - [Bun](https://bun.sh/) runtime
-- [Conda](https://docs.conda.io/en/latest/miniconda.html) (Miniconda 或 Anaconda)
-- 名为 `demucs` 的 conda 环境，并已安装 demucs
+- [Conda](https://docs.conda.io/en/latest/miniconda.html) (Miniconda or Anaconda)
+- A conda environment named `demucs` with demucs installed
 
-## 安装
+## Installation
 
-### 局部安装（开发）
+### Local Installation (Development)
 
 ```bash
-# 安装依赖
+# Install dependencies
 bun install
 ```
 
-### 全局安装
+### Global Installation
 
 ```bash
-# 在项目根目录执行
+# From project root
 cd /path/to/demucs-cli && bun install -g .
 
-# 或者从任意位置安装
+# Or from any location
 bun install -g /path/to/demucs-cli
 ```
 
-安装后可以在任意位置使用 `demucs-cli` 命令。
+After installation, use `demucs-cli` command from anywhere.
 
-## 环境准备
+## Environment Setup
 
-⚠️ **重要**: Demucs 需要完整的依赖环境才能正常运行。仅安装 `demucs` 包可能导致音频处理失败。
+⚠️ **Important**: Demucs requires a complete dependency environment to function properly. Installing only the `demucs` package may cause audio processing failures.
 
-### 方法一：使用环境配置文件（推荐）
+### Method 1: Using Environment Configuration File (Recommended)
 
-这是最可靠的方式，确保所有依赖都正确安装：
+This is the most reliable approach to ensure all dependencies are correctly installed:
 
 ```bash
-# 1. 创建并配置环境（使用项目提供的 environment-cpu.yml）
+# 1. Create and configure environment (using provided environment-cpu.yml)
 conda env update -f environment-cpu.yml
 
-# 2. 激活环境
+# 2. Activate the environment
 conda activate demucs
 
-# 3. 验证安装
+# 3. Verify installation
 bun run check
 ```
 
-### 方法二：手动安装
+### Method 2: Manual Installation
 
-如果无法使用环境配置文件，可以手动安装：
+If you cannot use the environment configuration file, install manually:
 
 ```bash
-# 1. 创建 conda 环境
+# 1. Create conda environment
 conda create -n demucs python=3.10
 
-# 2. 激活环境
+# 2. Activate environment
 conda activate demucs
 
-# 3. 安装 PyTorch（CPU 版本）
+# 3. Install PyTorch (CPU version)
 conda install pytorch cpuonly -c pytorch
 
-# 4. 安装其他必要依赖
+# 4. Install other required dependencies
 conda install ffmpeg tqdm -c conda-forge
 
-# 5. 安装 demucs
+# 5. Install demucs
 pip install demucs
 
-# 6. 安装额外的 Python 依赖
+# 6. Install additional Python dependencies
 pip install diffq dora-search einops hydra-colorlog hydra-core julius lameenc openunmix musdb museval soundfile submitit treetable
 
-# 7. 验证安装
+# 7. Verify installation
 bun run check
 ```
 
-### 依赖说明
+### Dependency Overview
 
-Demucs 依赖以下关键组件：
-- **PyTorch**: 深度学习框架
-- **FFmpeg**: 音频处理工具
-- **其他 Python 包**: diffq, einops, hydra-core, soundfile 等
+Demucs relies on the following key components:
+- **PyTorch**: Deep learning framework
+- **FFmpeg**: Audio processing tool
+- **Other Python packages**: diffq, einops, hydra-core, soundfile, etc.
 
-如果缺少这些依赖，音频处理可能会失败或报错。
+Missing these dependencies may cause audio processing to fail or produce errors.
 
-## 使用方法
+## Usage
 
-### 基础语法
+### Basic Syntax
 
-**全局安装后：**
+**After global installation:**
 ```bash
 demucs-cli [options] <input...>
 ```
 
-**局部安装（开发）：**
+**For local installation (development):**
 ```bash
 bun run start [options] <input...>
 ```
 
-### 命令行参数
+### Command Line Options
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `<input>` | 音频文件或目录路径（支持多个） | - |
-| `-o, --output <dir>` | 输出目录 | `./stems` |
-| `-d, --device <device>` | 设备类型 (cpu/cuda/mps) | `cpu` |
-| `-j, --jobs <number>` | 并发处理任务数 | `1` |
-| `-m, --model <model>` | Demucs 模型名称 | `htdemucs` |
-| `--env <name>` | Conda 环境名称 | `demucs` |
-| `-f, --format <format>` | 输出格式 (wav/mp3) | `wav` |
-| `--mp3-bitrate <rate>` | MP3 比特率 | `320k` |
-| `-v, --verbose` | 详细输出模式 | `false` |
-| `--check` | 仅检查环境，不执行处理 | - |
-| `--dry-run` | 模拟运行，显示将要执行的命令 | - |
+| Option | Description | Default |
+|--------|-------------|---------|
+| `<input>` | Audio file(s) or directory path (supports multiple) | - |
+| `-o, --output <dir>` | Output directory | `./stems` |
+| `-d, --device <device>` | Device type (cpu/cuda/mps) | `cpu` |
+| `-j, --jobs <number>` | Number of concurrent processing tasks | `1` |
+| `-m, --model <model>` | Demucs model name | `htdemucs` |
+| `--env <name>` | Conda environment name | `demucs` |
+| `-f, --format <format>` | Output format (wav/mp3) | `wav` |
+| `--mp3-bitrate <rate>` | MP3 bitrate (e.g., 320k, 192k) | `320k` |
+| `-v, --verbose` | Verbose output mode | `false` |
+| `--check` | Check environment only, don't process | - |
+| `--dry-run` | Simulate run, show commands to be executed | - |
 
-### 使用示例
+### Examples
 
 ```bash
-# 检查环境
+# Check environment
 bun run check
 
-# 单文件处理
+# Process single file
 bun run start song.mp3
 
-# 批量处理目录
+# Batch process directory
 bun run start ./songs
 
-# 多文件处理
+# Process multiple files
 bun run start song1.mp3 song2.wav
 
-# 自定义输出目录和设备
+# Custom output directory and device
 bun run start -o ./separated -d cuda song.mp3
 
-# 并发处理（4个任务）
+# Concurrent processing (4 tasks)
 bun run start -j 4 ./album
 
-# 输出为 MP3 格式（默认 320k 比特率）
+# Output as MP3 (default 320k bitrate)
 bun run start -f mp3 song.mp3
 
-# 输出为 MP3 格式（自定义比特率）
+# Output as MP3 (custom bitrate)
 bun run start -f mp3 --mp3-bitrate 192k song.mp3
 
-# 模拟运行
+# Dry run
 bun run start --dry-run song.mp3
 
-# 详细输出模式
+# Verbose mode
 bun run start -v song.mp3
 ```
 
-## 项目结构
+### Output Structure
+
+After processing, you'll find **5 audio files** in the output directory:
+
+```
+stems/
+└── htdemucs/
+    └── {filename}/
+        ├── drums.{ext}        # Demucs output
+        ├── bass.{ext}         # Demucs output
+        ├── other.{ext}        # Demucs output
+        ├── vocals.{ext}       # Demucs output
+        └── instrumental.{ext} # 🆕 Auto-generated accompaniment
+```
+
+## Project Structure
 
 ```
 demucs-cli/
 ├── src/
-│   ├── cli.ts           # CLI 参数解析与入口
-│   ├── checker.ts       # 环境检查模块
-│   ├── processor.ts     # 核心处理模块
+│   ├── cli.ts           # CLI argument parsing and entry point
+│   ├── checker.ts       # Environment validation module
+│   ├── processor.ts     # Core processing logic
 │   └── utils/
-│       ├── conda.ts     # conda 相关工具函数
-│       └── audio.ts     # 音频文件处理工具
+│       ├── conda.ts     # Conda utility functions
+│       ├── audio.ts     # Audio file handling utilities
+│       └── merge.ts     # Audio merging for instrumental generation
 ├── docs/
-│   └── PRD.md           # 产品需求文档
-├── index.ts             # 主入口
+│   ├── PRD.md           # Product Requirements Document
+│   └── PRD-instrumental.md  # Instrumental feature PRD
+├── index.ts             # Main entry point
+├── environment-cpu.yml  # Conda environment configuration
 └── package.json
 ```
 
-## 支持的音频格式
+## Supported Audio Formats
 
 - MP3 (.mp3)
 - WAV (.wav)
@@ -176,15 +206,26 @@ demucs-cli/
 - WMA (.wma)
 - AIFF (.aiff, .aif)
 
-## 开发
+## Development
 
 ```bash
-# 运行
+# Run
 bun run start
 
-# 检查环境
+# Check environment
 bun run check
 ```
+
+## Key Technical Decisions
+
+- **Conda Environment Isolation**: Uses `conda run -n <env>` instead of `conda activate` to avoid shell pollution
+- **Bun Native APIs**: Leverages Bun.spawn() and Bun.$() for better performance
+- **Default Output**: Changed from `output` to `stems` for clearer semantics
+- **Automatic Instrumental**: Uses ffmpeg amix filter to merge drum, bass, and other stems
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
